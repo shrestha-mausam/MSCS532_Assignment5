@@ -16,24 +16,28 @@ import numpy as np
 class QuicksortAnalyzer:
     
     def __init__(self):
+        # keeping track of how many operations we do
         self.comparison_count = 0
         self.swap_count = 0
     
     def reset_counters(self):
+        # reset everything for a fresh start
         self.comparison_count = 0
         self.swap_count = 0
     
     def partition(self, arr: List[int], low: int, high: int) -> int:
+        # using the last element as pivot (this is the basic version)
         pivot = arr[high]
-        i = low - 1
+        i = low - 1  # tracks where to put smaller elements
         
         for j in range(low, high):
-            self.comparison_count += 1
+            self.comparison_count += 1  # counting every comparison
             if arr[j] <= pivot:
                 i += 1
-                arr[i], arr[j] = arr[j], arr[i]
+                arr[i], arr[j] = arr[j], arr[i]  # swap them
                 self.swap_count += 1
         
+        # put pivot in its final position
         arr[i + 1], arr[high] = arr[high], arr[i + 1]
         self.swap_count += 1
         
@@ -43,28 +47,30 @@ class QuicksortAnalyzer:
         if high is None:
             high = len(arr) - 1
         
-        if low < high:
+        if low < high:  # base case - if we have more than 1 element
             pivot_index = self.partition(arr, low, high)
+            # recursively sort both halves
             self.quicksort_deterministic(arr, low, pivot_index - 1)
             self.quicksort_deterministic(arr, pivot_index + 1, high)
         
         return arr
     
     def randomized_partition(self, arr: List[int], low: int, high: int) -> int:
+        # pick a random pivot instead of always using the last element
         pivot_index = random.randint(low, high)
-        arr[pivot_index], arr[high] = arr[high], arr[pivot_index]
+        arr[pivot_index], arr[high] = arr[high], arr[pivot_index]  # move it to the end
         self.swap_count += 1
-        return self.partition(arr, low, high)
+        return self.partition(arr, low, high)  # now use the regular partition
     
     def quicksort_randomized(self, arr: List[int], low: int = 0, high: int = None) -> List[int]:
         if high is None:
             high = len(arr) - 1
         
         if low < high:
-            # Use randomized partition
+            # this is the key difference - random pivot selection
             pivot_index = self.randomized_partition(arr, low, high)
             
-            # Recursively sort elements before and after partition
+            # same recursive approach as the deterministic version
             self.quicksort_randomized(arr, low, pivot_index - 1)
             self.quicksort_randomized(arr, pivot_index + 1, high)
         
@@ -72,25 +78,16 @@ class QuicksortAnalyzer:
 
 
 def generate_test_data(size: int, data_type: str = 'random') -> List[int]:
-    """
-    Generate test data of different types for empirical analysis.
-    
-    Args:
-        size: Size of the array to generate
-        data_type: Type of data ('random', 'sorted', 'reverse_sorted', 'nearly_sorted')
-        
-    Returns:
-        A list of integers for testing
-    """
+    # creating different types of test data to see how algorithms perform
     if data_type == 'random':
         return [random.randint(1, 1000) for _ in range(size)]
     elif data_type == 'sorted':
-        return list(range(1, size + 1))
+        return list(range(1, size + 1))  # worst case for standard quicksort
     elif data_type == 'reverse_sorted':
-        return list(range(size, 0, -1))
+        return list(range(size, 0, -1))  # also worst case
     elif data_type == 'nearly_sorted':
         arr = list(range(1, size + 1))
-        # Randomly swap 5% of elements
+        # mess it up a little bit - swap about 5% of elements
         num_swaps = max(1, size // 20)
         for _ in range(num_swaps):
             i, j = random.randint(0, size-1), random.randint(0, size-1)
@@ -101,12 +98,13 @@ def generate_test_data(size: int, data_type: str = 'random') -> List[int]:
 
 
 def measure_performance(analyzer: QuicksortAnalyzer, sort_func: Callable, arr: List[int], iterations: int = 5) -> Tuple[float, int, int]:
+    # run multiple times to get average performance
     times = []
     total_comparisons = 0
     total_swaps = 0
     
     for _ in range(iterations):
-        test_arr = arr.copy()
+        test_arr = arr.copy()  # don't modify the original
         analyzer.reset_counters()
         
         start_time = time.time()
@@ -117,6 +115,7 @@ def measure_performance(analyzer: QuicksortAnalyzer, sort_func: Callable, arr: L
         total_comparisons += analyzer.comparison_count
         total_swaps += analyzer.swap_count
     
+    # calculate averages
     avg_time = sum(times) / len(times)
     avg_comparisons = total_comparisons // iterations
     avg_swaps = total_swaps // iterations
@@ -129,6 +128,7 @@ def empirical_analysis():
     print("EMPIRICAL ANALYSIS: DETERMINISTIC vs RANDOMIZED QUICKSORT")
     print("=" * 80)
     
+    # testing different array sizes and data patterns
     sizes = [100, 500, 1000, 2000, 5000]
     data_types = ['random', 'sorted', 'reverse_sorted', 'nearly_sorted']
     
@@ -141,11 +141,13 @@ def empirical_analysis():
         for size in sizes:
             test_data = generate_test_data(size, data_type)
             
+            # test the standard version
             det_analyzer = QuicksortAnalyzer()
             det_time, det_comp, det_swaps = measure_performance(
                 det_analyzer, det_analyzer.quicksort_deterministic, test_data
             )
             
+            # test the randomized version
             rand_analyzer = QuicksortAnalyzer()
             rand_time, rand_comp, rand_swaps = measure_performance(
                 rand_analyzer, rand_analyzer.quicksort_randomized, test_data
@@ -204,6 +206,7 @@ def demonstrate_algorithms():
     print("QUICKSORT ALGORITHM DEMONSTRATION")
     print("=" * 80)
     
+    # using a small array to show how it works
     test_array = [64, 34, 25, 12, 22, 11, 90]
     print(f"Original array: {test_array}")
     
@@ -217,6 +220,7 @@ def demonstrate_algorithms():
     print(f"After sorting:  {det_array}")
     print(f"Comparisons: {analyzer.comparison_count}, Swaps: {analyzer.swap_count}")
     
+    # now try the randomized version
     analyzer.reset_counters()
     rand_array = test_array.copy()
     
@@ -228,15 +232,15 @@ def demonstrate_algorithms():
 
 
 def main():
-    sys.setrecursionlimit(10000)
+    sys.setrecursionlimit(10000)  # need this for larger arrays
     
     print("QUICKSORT ALGORITHM: IMPLEMENTATION, ANALYSIS, AND RANDOMIZATION")
     print("Assignment 5 - MSCS 532")
     print("=" * 80)
     
-    demonstrate_algorithms()
-    theoretical_analysis()
-    empirical_analysis()
+    demonstrate_algorithms()  # show how both algorithms work
+    theoretical_analysis()    # explain the complexity
+    empirical_analysis()      # run the performance tests
     
     print("\n" + "=" * 80)
     print("ANALYSIS COMPLETE")
